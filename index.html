@@ -1,0 +1,331 @@
+<html>
+<head>
+    <title>The Scratchpad | V2</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #4a4a4a;
+            color: #fff; /* Default text color */
+        }
+        .header {
+            background-color: #000;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 10px;
+            position: relative;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .options-icon {
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown-menu a {
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            display: block;
+            border-radius: 10px;
+        }
+        .dropdown-menu a:hover {
+            background-color: #575757;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px);
+            position: relative;
+        }
+        .scratchpad {
+            background-color: #6e6e6e;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 400px;
+            height: 300px;
+            padding: 10px;
+            box-sizing: border-box;
+            position: absolute;
+            resize: both;
+            overflow: auto;
+        }
+        .scratchpad-header {
+            background-color: #8a8a8a;
+            padding: 5px 10px;
+            border-radius: 10px;
+            color: #fff;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .scratchpad-header .close-btn, .scratchpad-header .export-btn, .scratchpad-header .copy-btn {
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .scratchpad-content {
+            background-color: #6e6e6e;
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            height: calc(100% - 60px);
+            overflow: auto;
+        }
+        .scratchpad-content[contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #aaa;
+        }
+        .system-ui {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 3; /* Always on top */
+            width: 300px;
+        }
+        .system-ui-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .system-ui-header h2 {
+            margin: 0;
+        }
+        .system-ui-header .close-btn {
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .system-ui-content {
+            margin-top: 20px;
+        }
+        .system-ui-content .option {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .system-ui-content .option label {
+            margin-right: 10px;
+        }
+        .system-ui-content .option input[type="color"] {
+            width: 50px;
+            height: 30px;
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1>The Scratchpad | V2</h1>
+        <div class="options-icon" onclick="toggleDropdown()">
+            <i class="fas fa-cog"></i>
+        </div>
+        <div class="dropdown-menu" id="dropdown-menu">
+            <a href="#" onclick="createScratchpad()">New Scratchpad</a>
+            <a href="#" onclick="cleanUp()">Clean Up</a>
+            <a href="#" onclick="openSystemUI()">System</a>
+        </div>
+    </div>
+    <div class="container" id="container">
+        <div class="scratchpad" id="scratchpad1" onclick="bringToFront(this)">
+            <div class="scratchpad-header" id="scratchpad-header1">
+                Scratchpad 1
+                <div>
+                    <i class="fas fa-copy copy-btn" onclick="copyScratchpad('scratchpad1')"></i>
+                    <i class="fas fa-file-export export-btn" onclick="exportScratchpad('scratchpad1')"></i>
+                    <span class="close-btn" onclick="removeScratchpad('scratchpad1')">x</span>
+                </div>
+            </div>
+            <div class="scratchpad-content" contenteditable="true" data-placeholder="Type here..."></div>
+        </div>
+    </div>
+    <div class="system-ui" id="system-ui">
+        <div class="system-ui-header">
+            <h2>System UI</h2>
+            <span class="close-btn" onclick="closeSystemUI()">x</span>
+        </div>
+        <div class="system-ui-content">
+            <div class="option">
+                <label for="textColor">Scratchpad Text Color:</label>
+                <input type="color" id="textColor" name="textColor" onchange="changeTextColor(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scratchpadCount = 1;
+        let zIndexCounter = 1;
+
+        // Make the scratchpad draggable
+        function dragElement(element) {
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            var header = element.querySelector('.scratchpad-header');
+            if (header) {
+                header.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                bringToFront(element);
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // Initialize draggable for the first scratchpad
+        dragElement(document.getElementById("scratchpad1"));
+
+        // Toggle dropdown menu
+        function toggleDropdown() {
+            var dropdown = document.getElementById("dropdown-menu");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+
+        // Close the dropdown if the user clicks outside of it
+        window.onclick = function(event) {
+            if (!event.target.matches('.options-icon') && !event.target.matches('.options-icon *')) {
+                var dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.style.display === "block") {
+                        openDropdown.style.display = "none";
+                    }
+                }
+            }
+        }
+
+        // Remove the scratchpad
+        function removeScratchpad(id) {
+            var scratchpad = document.getElementById(id);
+            scratchpad.parentNode.removeChild(scratchpad);
+        }
+
+        // Create a new scratchpad
+        function createScratchpad() {
+            scratchpadCount++;
+            var container = document.getElementById("container");
+            var newScratchpad = document.createElement("div");
+            newScratchpad.className = "scratchpad";
+            newScratchpad.id = "scratchpad" + scratchpadCount;
+            newScratchpad.setAttribute("onclick", "bringToFront(this)");
+            newScratchpad.innerHTML = `
+                <div class="scratchpad-header" id="scratchpad-header${scratchpadCount}">
+                    Scratchpad ${scratchpadCount}
+                    <div>
+                        <i class="fas fa-copy copy-btn" onclick="copyScratchpad('scratchpad${scratchpadCount}')"></i>
+                        <i class="fas fa-file-export export-btn" onclick="exportScratchpad('scratchpad${scratchpadCount}')"></i>
+                        <span class="close-btn" onclick="removeScratchpad('scratchpad${scratchpadCount}')">x</span>
+                    </div>
+                </div>
+                <div class="scratchpad-content" contenteditable="true" data-placeholder="Type here..."></div>
+            `;
+            container.appendChild(newScratchpad);
+            dragElement(newScratchpad);
+        }
+
+        // Export scratchpad content to a .txt file
+        function exportScratchpad(id) {
+            var scratchpad = document.getElementById(id);
+            var content = scratchpad.querySelector('.scratchpad-content').innerText;
+            var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Scratchpad.txt";
+            link.click();
+        }
+
+        // Copy scratchpad content to clipboard
+        function copyScratchpad(id) {
+            var scratchpad = document.getElementById(id);
+            var content = scratchpad.querySelector('.scratchpad-content').innerText;
+            navigator.clipboard.writeText(content).then(function() {
+                alert("Scratchpad content copied to clipboard!");
+            }, function(err) {
+                alert("Failed to copy text: ", err);
+            });
+        }
+
+        // Open the system UI
+        function openSystemUI() {
+            var systemUI = document.getElementById("system-ui");
+            systemUI.style.display = "block";
+        }
+
+        // Close the system UI
+        function closeSystemUI() {
+            var systemUI = document.getElementById("system-ui");
+            systemUI.style.display = "none";
+        }
+
+        // Clean up all scratchpads
+        function cleanUp() {
+            var container = document.getElementById("container");
+            var scratchpads = container.getElementsByClassName("scratchpad");
+            while (scratchpads.length > 0) {
+                container.removeChild(scratchpads[0]);
+            }
+        }
+
+        // Change scratchpad text color
+        function changeTextColor(color) {
+            var scratchpads = document.getElementsByClassName("scratchpad-content");
+            for (var i = 0; i < scratchpads.length; i++) {
+                scratchpads[i].style.color = color;
+            }
+        }
+
+        // Bring the focused scratchpad to the front
+        function bringToFront(element) {
+            zIndexCounter++;
+            element.style.zIndex = zIndexCounter;
+        }
+    </script>
+</body>
+</html>
