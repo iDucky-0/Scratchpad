@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>The Scratchpad | V2</title>
+    <title>The Scratchpad | V2 [2.4.1]</title>
     <style>
         body {
             margin: 0;
@@ -139,6 +139,20 @@
             border-radius: 5px;
             border: none;
         }
+        .credits-button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .credits-button:hover {
+            background-color: #575757;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
@@ -164,7 +178,7 @@
                     <span class="close-btn" onclick="removeScratchpad('scratchpad1')">x</span>
                 </div>
             </div>
-            <div class="scratchpad-content" contenteditable="true" data-placeholder="Type here..."></div>
+            <div class="scratchpad-content" contenteditable="true" data-placeholder="Freedom is upon you! Feel free to write: feelings, hate, ideas, code, names?, lists..."></div>
         </div>
     </div>
     <div class="system-ui" id="system-ui">
@@ -179,6 +193,7 @@
             </div>
         </div>
     </div>
+    <button class="credits-button" onclick="showCredits()">Credits</button>
 
     <script>
         let scratchpadCount = 1;
@@ -261,10 +276,10 @@
                     <div>
                         <i class="fas fa-copy copy-btn" onclick="copyScratchpad('scratchpad${scratchpadCount}')"></i>
                         <i class="fas fa-file-export export-btn" onclick="exportScratchpad('scratchpad${scratchpadCount}')"></i>
-                        <span class="close-btn" onclick="removeScratchpad('scratchpad${scratchpadCount}')">x</span>
+                        <span class="close-btn" onclick="removeScratchpad('scratchpad${scratchpadCount}')">X</span>
                     </div>
                 </div>
-                <div class="scratchpad-content" contenteditable="true" data-placeholder="Type here..."></div>
+                <div class="scratchpad-content" contenteditable="true" data-placeholder="Freedom is upon you! Feel free to write: feelings, hate, ideas, code, names?, lists..."></div>
             `;
             container.appendChild(newScratchpad);
             dragElement(newScratchpad);
@@ -288,7 +303,7 @@
             navigator.clipboard.writeText(content).then(function() {
                 alert("Scratchpad content copied to clipboard!");
             }, function(err) {
-                alert("Failed to copy text: ", err);
+                alert("Failed to copy scratchpad context, error code 404? > ", err);
             });
         }
 
@@ -325,6 +340,11 @@
         function bringToFront(element) {
             zIndexCounter++;
             element.style.zIndex = zIndexCounter;
+        }
+
+        // Show credits
+        function showCredits() {
+            alert("The Scratchpad \nDeveloped by iDucky \n[ Some may know me by IR ]");
         }
     </script>
 </body>
