@@ -6,7 +6,8 @@
             margin: 0;
             font-family: Arial, sans-serif;
             background-color: #4a4a4a;
-            color: #fff;
+            color: #fff; /* Default text color */
+            overflow: hidden; /* Prevent scrolling during loading */
         }
         .header {
             background-color: #000;
@@ -21,17 +22,22 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            width: 80%;
+            width: 80%; /* Make the bar longer */
         }
         .header h1 {
             margin: 0;
             font-size: 24px;
         }
-        .header .options-icon {
+        .header .icons {
+            display: flex;
+            align-items: center;
+        }
+        .header .icons .icon {
             font-size: 18px;
             cursor: pointer;
+            margin-left: 10px;
         }
-        .dropdown-menu {
+        .dropdown-menu, .settings-menu {
             display: none;
             position: absolute;
             top: 40px;
@@ -42,14 +48,14 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             z-index: 1;
         }
-        .dropdown-menu a {
+        .dropdown-menu a, .settings-menu a {
             color: #fff;
             padding: 10px 20px;
             text-decoration: none;
             display: block;
             border-radius: 10px;
         }
-        .dropdown-menu a:hover {
+        .dropdown-menu a:hover, .settings-menu a:hover {
             background-color: #575757;
         }
         .container {
@@ -58,7 +64,7 @@
             align-items: center;
             height: calc(100vh - 60px);
             position: relative;
-            padding-top: 60px;
+            padding-top: 60px; /* Adjust for the floating header */
         }
         .scratchpad {
             background-color: #6e6e6e;
@@ -114,18 +120,82 @@
         .credits-button:hover {
             background-color: #575757;
         }
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            font-size: 24px;
+            opacity: 1;
+            transition: opacity 1s ease-out;
+        }
+        .loading-screen .loading-text {
+            position: absolute;
+            top: 20px;
+        }
+        .loading-screen .ball {
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            position: absolute;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% {
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            25% {
+                top: 40%;
+                left: 45%;
+                transform: translate(-50%, -50%);
+            }
+            50% {
+                top: 60%;
+                left: 55%;
+                transform: translate(-50%, -50%);
+            }
+            75% {
+                top: 40%;
+                left: 55%;
+                transform: translate(-50%, -50%);
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-text">Loading...</div>
+        <div class="ball"></div>
+    </div>
     <div class="header">
         <h1>The Scratchpad | V2</h1>
-        <div class="options-icon" onclick="toggleDropdown()">
-            <i class="fas fa-tools"></i>
+        <div class="icons">
+            <div class="icon" onclick="toggleDropdown()">
+                <i class="fas fa-tools"></i>
+            </div>
+            <div class="icon" onclick="toggleSettings()">
+                <i class="fas fa-cog"></i>
+            </div>
         </div>
         <div class="dropdown-menu" id="dropdown-menu">
             <a href="#" onclick="createScratchpad()">New Scratchpad</a>
             <a href="#" onclick="cleanUp()">Clean Up</a>
+        </div>
+        <div class="settings-menu" id="settings-menu">
+            <a href="#">WIP</a>
+            <a href="#">WIP</a>
         </div>
     </div>
     <div class="container" id="container">
@@ -146,6 +216,17 @@
     <script>
         let scratchpadCount = 1;
         let zIndexCounter = 1;
+
+        // Show loading screen for 5 seconds and then fade out
+        window.onload = function() {
+            setTimeout(function() {
+                document.getElementById('loading-screen').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.body.style.overflow = 'auto'; // Re-enable scrolling
+                }, 1000); // Wait for the fade-out transition to complete
+            }, 5000);
+        };
 
         // Make the scratchpad draggable
         function dragElement(element) {
@@ -182,15 +263,24 @@
             }
         }
 
+        // Initialize draggable for the first scratchpad
         dragElement(document.getElementById("scratchpad1"));
 
+        // Toggle dropdown menu
         function toggleDropdown() {
             var dropdown = document.getElementById("dropdown-menu");
             dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
         }
 
+        // Toggle settings menu
+        function toggleSettings() {
+            var settings = document.getElementById("settings-menu");
+            settings.style.display = settings.style.display === "block" ? "none" : "block";
+        }
+
+        // Close the dropdown if the user clicks outside of it
         window.onclick = function(event) {
-            if (!event.target.matches('.options-icon') && !event.target.matches('.options-icon *')) {
+            if (!event.target.matches('.icon') && !event.target.matches('.icon *')) {
                 var dropdowns = document.getElementsByClassName("dropdown-menu");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -198,14 +288,23 @@
                         openDropdown.style.display = "none";
                     }
                 }
+                var settings = document.getElementsByClassName("settings-menu");
+                for (var i = 0; i < settings.length; i++) {
+                    var openSettings = settings[i];
+                    if (openSettings.style.display === "block") {
+                        openSettings.style.display = "none";
+                    }
+                }
             }
         }
 
+        // Remove the scratchpad
         function removeScratchpad(id) {
             var scratchpad = document.getElementById(id);
             scratchpad.parentNode.removeChild(scratchpad);
         }
 
+        // Create a new scratchpad
         function createScratchpad() {
             scratchpadCount++;
             var container = document.getElementById("container");
@@ -228,6 +327,7 @@
             dragElement(newScratchpad);
         }
 
+        // Export scratchpad content to a .txt file
         function exportScratchpad(id) {
             var scratchpad = document.getElementById(id);
             var content = scratchpad.querySelector('.scratchpad-content').innerText;
@@ -238,6 +338,7 @@
             link.click();
         }
 
+        // Copy scratchpad content to clipboard
         function copyScratchpad(id) {
             var scratchpad = document.getElementById(id);
             var content = scratchpad.querySelector('.scratchpad-content').innerText;
@@ -248,13 +349,24 @@
             });
         }
 
+        // Bring the focused scratchpad to the front
         function bringToFront(element) {
             zIndexCounter++;
             element.style.zIndex = zIndexCounter;
         }
 
+        // Clean up all scratchpads
+        function cleanUp() {
+            var container = document.getElementById("container");
+            var scratchpads = container.getElementsByClassName("scratchpad");
+            while (scratchpads.length > 0) {
+                container.removeChild(scratchpads[0]);
+            }
+        }
+
+        // Show credits
         function showCredits() {
-            alert("> The Scratchpad | V2 \n> Developed by iDucky \n> (People also know me as IR)");
+            alert("The Scratchpad | V2\nDeveloped by iDucky\n(People also know me as IR)");
         }
     </script>
 </body>
